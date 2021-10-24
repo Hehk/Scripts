@@ -18,7 +18,7 @@ const delay = (ms : number) => new Promise(res => setTimeout(res, ms))
 export async function setupRoam({ password, email, graph } : SetupRoam) : RoamPage {
   const roamApp = "https://roamresearch.com/#/app"
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     executablePath: '/opt/homebrew/bin/chromium'
   });
   const page = await browser.newPage();
@@ -37,6 +37,6 @@ export async function setupRoam({ password, email, graph } : SetupRoam) : RoamPa
   return page as RoamPage
 }
 
-export async function query(roamPage : RoamPage, query : string) {
-  return await roamPage.evaluate(query => window.roamAlphaAPI.q(query), query)
+export async function query(roamPage : RoamPage, ...query : string[]) {
+  return await roamPage.evaluate(query => window.roamAlphaAPI.q(...query), query)
 }
