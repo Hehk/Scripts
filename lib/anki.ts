@@ -14,7 +14,7 @@ async function invoke(action: string, params: unknown) {
         version: 6,
       }),
     })
-    const json : any = await response.json()
+    const json: any = await response.json()
     if (json.error) throw json.error
 
     return json.result

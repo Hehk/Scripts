@@ -69,10 +69,10 @@ setupRoam({
           options: {
             allowDuplicate: false,
           },
-          tags: term.domains
+          tags: term.domains,
         })
       } catch (e) {
-        if (e === 'cannot create note because it is a duplicate') {
+        if (e === "cannot create note because it is a duplicate") {
           console.log(`Duplicate: ${term.term}`)
         } else {
           console.error(e)
@@ -96,7 +96,7 @@ setupRoam({
       word: string
       translation: string
     }
-    const words : Word[] = nlResults
+    const words: Word[] = nlResults
       .map((t: any) => t[0].string)
       .map((line: string) => {
         const [word, translation] = line.replace("#Nederlands", "").split(":")
@@ -115,10 +115,10 @@ setupRoam({
           options: {
             allowDuplicate: false,
           },
-          tags: []
+          tags: [],
         })
       } catch (e) {
-        if (e === 'cannot create note because it is a duplicate') {
+        if (e === "cannot create note because it is a duplicate") {
           console.log(`Duplicate: ${word.word}`)
         } else {
           console.error(e)

@@ -24,7 +24,7 @@ export async function setupRoam({
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: process.env.CHROME_LOC,
-    args: ['--no-sandbox'],
+    args: ["--no-sandbox"],
   })
   const page = await browser.newPage()
   await page.goto(roamApp)
