@@ -7,7 +7,9 @@
   "scripts": {
     "build": "ts-node build.ts",
     "format": "prettier --write .",
-    "ts": "tsc --noEmit -w"
+    "ts": "tsc --noEmit -w",
+    "docker:enter": "docker run -v \"$(pwd):/app\" --add-host host.docker.internal:host-gateway -it scripts /bin/bash",
+    "docker:build": "docker build -t scripts ."
   },
   "devDependencies": {
     "@types/node": "^16.11.4",

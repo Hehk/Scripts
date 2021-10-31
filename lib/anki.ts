@@ -2,8 +2,11 @@ import fetch from "node-fetch"
 // Docs: https://foosoft.net/projects/anki-connect/#deck-actions
 
 async function invoke(action: string, params: unknown) {
+  const url = process.env.ANKI_URI
+  if (!url) throw new Error("Never set ANKI_URI")
+
   try {
-    const response = await fetch("http://127.0.0.1:8765/", {
+    const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify({
         action,

@@ -23,7 +23,8 @@ export async function setupRoam({
   const roamApp = "https://roamresearch.com/#/app"
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: "/opt/homebrew/bin/chromium",
+    executablePath: process.env.CHROME_LOC,
+    args: ['--no-sandbox'],
   })
   const page = await browser.newPage()
   await page.goto(roamApp)
