@@ -117,15 +117,63 @@ setupRoam({
           },
           tags: [],
         })
+        console.log(`Added: ${word.word}`)
       } catch (e) {
-        if (e === "cannot create note because it is a duplicate") {
-          console.log(`Duplicate: ${word.word}`)
-        } else {
+        if (e !== "cannot create note because it is a duplicate") {
           console.error(e)
         }
       }
     }
 
+    return roam
+  })
+  .then(async (roam: RoamPage) => {
+    const jargon : [string, string, string][] = await query(roam, `[
+      :find ?title ?domain ?definition
+      :where [?domainRef :node/title "Domain"]
+             [?a :block/refs ?domainRef]
+             [?a :block/page ?page]
+             [?defRef :node/title "Definition"]
+             [?b :block/refs ?defRef]
+             [?b :block/page ?page]
+
+             [?page :node/title ?title]
+             [?b :block/string ?definition]
+             [?a :block/string ?domain]
+      ]`)
+    const formattedJargon = jargon.map(([term, domain, definition]) => {
+      if (term === 'Jargon' || term === 'Templates') return
+      const domains = domain.match(/(#\S+)|(#?\[\[.+?\]\])/g)?.map(d => d.replaceAll(/#|\[|\]/g, '')) || []
+
+      return {
+        term,
+        domains,
+        definition: definition.replace('Definition::', '').trim()
+      }
+    }).filter(exists)
+
+    for (const jargon of formattedJargon) {
+      try {
+        await Anki.addNote({
+          deckName: "General Knowledge",
+          modelName: "Basic",
+          fields: {
+            Front: jargon.term,
+            Back: jargon.definition,
+          },
+          options: {
+            allowDuplicate: false,
+          },
+          tags: jargon.domains,
+        })
+        console.log(`Added: ${jargon.term}`)
+      } catch (e) {
+        if (e !== "cannot create note because it is a duplicate") {
+          console.error(e)
+        }
+      }
+    }
+     
     return roam
   })
   .then((roam: RoamPage) => {
