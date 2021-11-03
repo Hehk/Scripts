@@ -176,6 +176,51 @@ setupRoam({
      
     return roam
   })
+  .then(async (roam: RoamPage) => {
+    const resp : any[] = await query(roam, `[
+      :find ?question (pull ?questionRef [{:block/children [:block/string]}])
+      :where
+          [?link :node/title "Review Question"]
+          [?questionRef :block/refs ?link]
+          [?questionRef :block/string ?question]
+      ]`)
+    const questions = resp.map(([question, children]) => {
+      question = question.replace('#[[Review Question]]', '').trim()
+      // I am still bad at pull X.x
+      children = children.children.map(x => x.string)
+      const answer = children.find(c => c.startsWith('Answer:')).trim()
+      if (!answer || !question) return
+
+      const tags = children.find(c => c.startsWith('Tags:')).trim().match(/(#\S+)|(#?\[\[.+?\]\])/g)?.map(d => d.replaceAll(/#|\[|\]/g, '')) || []
+
+      console.log(question, answer)
+      return { question, answer, tags }
+    }).filter(exists)
+
+    for (const q of questions) {
+      try {
+        await Anki.addNote({
+          deckName: "General Knowledge",
+          modelName: "Basic",
+          fields: {
+            Front: q.question,
+            Back: q.answer,
+          },
+          options: {
+            allowDuplicate: false,
+          },
+          tags: q.tags,
+        })
+        console.log(`Added: ${q.question}`)
+      } catch (e) {
+        if (e !== "cannot create note because it is a duplicate") {
+          console.error(e)
+        }
+      }
+    }
+
+    return roam
+  })
   .then((roam: RoamPage) => {
     roam.close()
     process.exit()
