@@ -1,6 +1,6 @@
 import dotenv from "dotenv"
 import * as Anki from "../../lib/anki"
-import { setupRoam, query, RoamPage } from "../../lib/roam"
+import { setupRoam, Roam } from "../../lib/roam"
 dotenv.config()
 
 type Term = {
@@ -39,10 +39,9 @@ setupRoam({
   email,
   graph: "Hehk",
 })
-  .then(async (roam: RoamPage) => {
+  .then(async (roam: Roam) => {
     // Right now, it is a pain in the ass to type this result...
-    const termResult: any = await query(
-      roam,
+    const termResult: any = await roam.query(
       `[
     :find (pull ?referencingBlock [:block/string])
     :in $ ?pagetitle
@@ -82,9 +81,8 @@ setupRoam({
 
     return roam
   })
-  .then(async (roam: RoamPage) => {
-    const nlResults: any = await query(
-      roam,
+  .then(async (roam: Roam) => {
+    const nlResults: any = await roam.query(
       `[:find (pull ?referencingBlock [:block/string])
         :in $ ?nederlands
         :where
@@ -127,8 +125,8 @@ setupRoam({
 
     return roam
   })
-  .then(async (roam: RoamPage) => {
-    const jargon : [string, string, string][] = await query(roam, `[
+  .then(async (roam: Roam) => {
+    const jargon : [string, string, string][] = await roam.query(`[
       :find ?title ?domain ?definition
       :where [?domainRef :node/title "Domain"]
              [?a :block/refs ?domainRef]
@@ -176,22 +174,28 @@ setupRoam({
      
     return roam
   })
-  .then(async (roam: RoamPage) => {
-    const resp : any[] = await query(roam, `[
+  .then(async (roam: Roam) => {
+    type node = {
+      children: {
+        string: string
+      }[]
+    }
+    type response = [string, node]
+    const resp : response[] = await roam.query<response[]>(`[
       :find ?question (pull ?questionRef [{:block/children [:block/string]}])
       :where
           [?link :node/title "Review Question"]
           [?questionRef :block/refs ?link]
           [?questionRef :block/string ?question]
       ]`)
-    const questions = resp.map(([question, children]) => {
+    const questions = resp.map(([question, node]) => {
       question = question.replace('#[[Review Question]]', '').trim()
       // I am still bad at pull X.x
-      children = children.children.map(x => x.string)
-      const answer = children.find(c => c.startsWith('Answer:')).trim()
+      const children = node.children.map(x => x.string)
+      const answer = (children.find((c : any) => c.startsWith('Answer:')) || '').trim()
       if (!answer || !question) return
 
-      const tags = children.find(c => c.startsWith('Tags:')).trim().match(/(#\S+)|(#?\[\[.+?\]\])/g)?.map(d => d.replaceAll(/#|\[|\]/g, '')) || []
+      const tags = (children.find((c : string) => c.startsWith('Tags:')) || '').trim().match(/(#\S+)|(#?\[\[.+?\]\])/g)?.map((d:string) => d.replaceAll(/#|\[|\]/g, '')) || []
 
       console.log(question, answer)
       return { question, answer, tags }
@@ -221,7 +225,11 @@ setupRoam({
 
     return roam
   })
-  .then((roam: RoamPage) => {
+  .then((roam: Roam) => {
     roam.close()
     process.exit()
+  })
+  .catch(e => {
+    console.error(e)
+    process.exit(1)
   })
